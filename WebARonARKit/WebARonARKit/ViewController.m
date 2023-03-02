@@ -224,6 +224,16 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     }
 }
 
+- (void)homeButtonClicked:(UIButton *)button {
+    // Load the default website.
+    NSString *defaultSite =
+    @"https://labs.3dverse.com";
+    NSURL *url = [NSURL URLWithString:defaultSite];
+    [wkWebView loadRequest:[NSURLRequest requestWithURL:url]];
+    [urlTextField setText:url.absoluteString];
+    initialPageLoadedWhenTrackingBegins = true;
+}
+
 - (void)forwardButtonClicked:(UIButton *)button {
     [wkWebView goForward];
 }
@@ -361,6 +371,12 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
     wkWebViewOriginalBackgroundColor = [UIColor whiteColor];
     // By default, the camera feed won't be shown until instructed otherwise
     [self setShowCameraFeed:NO];
+    
+    // Append something to tthe user agent to identify
+    UIWebView *webView = [[UIWebView alloc] initWithFrame:self.view.bounds];
+    NSString *userAgent = [webView stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+    NSString *newUserAgent = [userAgent stringByAppendingString:@" WebARonARKit"];
+    wkWebView.customUserAgent = newUserAgent;
 
     // Fixes the webview scalling problem on iPhoneX.
     [wkWebView.scrollView
@@ -386,11 +402,11 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
     // Load the default website.
     NSString *defaultSite =
-        @"https://developers.google.com/ar/develop/web/getting-started#examples";
+        @"https://labs.3dverse.com";
     NSURL *url = [NSURL URLWithString:defaultSite];
     [wkWebView loadRequest:[NSURLRequest requestWithURL:url]];
     [urlTextField setText:url.absoluteString];
-    initialPageLoadedWhenTrackingBegins = false;
+    initialPageLoadedWhenTrackingBegins = true;
 
     [self initOrientationNotifications];
     [self updateOrientation];
@@ -443,6 +459,7 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
 - (void)initButtons {
     [self initBackButton];
+    [self initHomeButton];
     [self initRefreshButton];
 }
 
@@ -455,6 +472,17 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
                    action:@selector(backButtonClicked:)
          forControlEvents:UIControlEventTouchDown];
     [self.view addSubview:backButton];
+}
+
+- (void)initHomeButton {
+    homeButton = [[UIButton alloc] init];
+    UIImage *backIcon = [UIImage imageNamed:@"HomeIcon"];
+    [homeButton setBackgroundColor:[UIColor clearColor]];
+    [homeButton setImage:backIcon forState:UIControlStateNormal];
+    [homeButton addTarget:self
+                   action:@selector(homeButtonClicked:)
+         forControlEvents:UIControlEventTouchDown];
+    [self.view addSubview:homeButton];
 }
 
 - (void)initRefreshButton {
@@ -579,6 +607,9 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
             [backButton
              setFrame:CGRectMake(URL_BUTTON_PADDING, 0, URL_BUTTON_WIDTH_PORTRAIT,
                                  URL_BUTTON_HEIGHT_PORTRAIT)];
+            [homeButton
+             setFrame:CGRectMake(URL_BUTTON_WIDTH_PORTRAIT, 0, URL_BUTTON_WIDTH_PORTRAIT,
+                                 URL_BUTTON_HEIGHT_PORTRAIT)];
             [refreshButton setFrame:CGRectMake(self.view.frame.size.width -
                                                URL_BUTTON_WIDTH_PORTRAIT -
                                                URL_BUTTON_PADDING,
@@ -593,10 +624,10 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
 
             if (urlTextFieldActive) {
                 [urlTextField setFont:[UIFont systemFontOfSize:17]];
-                [urlTextField setFrame:CGRectMake(URL_SAFE_AREA_HORIZONTAL,
+                [urlTextField setFrame:CGRectMake(URL_BUTTON_WIDTH_PORTRAIT + URL_SAFE_AREA_HORIZONTAL,
                                                   NOTCH_HEIGHT + URL_SAFE_AREA_VERTICAL,
                                                   self.view.frame.size.width -
-                                                  URL_SAFE_AREA_HORIZONTAL * 2.0,
+                                                  URL_SAFE_AREA_HORIZONTAL * 2.0 - URL_BUTTON_WIDTH_PORTRAIT,
                                                   URL_TEXTFIELD_HEIGHT_EXPANDED)];
                 [_navigationBacking
                  setFrame:CGRectMake(0, 0, self.view.frame.size.width,
@@ -611,10 +642,10 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
                                      PROGRESSVIEW_HEIGHT)];
             } else {
                 [urlTextField setFont:[UIFont systemFontOfSize:12]];
-                [urlTextField setFrame:CGRectMake(URL_SAFE_AREA_HORIZONTAL,
+                [urlTextField setFrame:CGRectMake(URL_BUTTON_WIDTH_PORTRAIT + URL_SAFE_AREA_HORIZONTAL,
                                                   NOTCH_HEIGHT + URL_SAFE_AREA_VERTICAL,
                                                   self.view.frame.size.width -
-                                                  URL_SAFE_AREA_HORIZONTAL * 2.0,
+                                                  URL_SAFE_AREA_HORIZONTAL * 2.0 - URL_BUTTON_WIDTH_PORTRAIT,
                                                   URL_TEXTFIELD_HEIGHT_MINIFIED)];
                 [_navigationBacking
                  setFrame:CGRectMake(0, 0, self.view.frame.size.width,
@@ -640,11 +671,15 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
             [backButton
              setFrame:CGRectMake(URL_BUTTON_PADDING, 0, URL_BUTTON_WIDTH_LANDSCAPE,
                                  URL_BUTTON_HEIGHT_LANDSCAPE)];
+            
+            [homeButton
+             setFrame:CGRectMake(URL_BUTTON_WIDTH_LANDSCAPE, 0, URL_BUTTON_WIDTH_LANDSCAPE,
+                                 URL_BUTTON_HEIGHT_LANDSCAPE)];
 
             [refreshButton
              setFrame:CGRectMake(self.view.frame.size.width - URL_BUTTON_PADDING -
-                                 URL_BUTTON_WIDTH_LANDSCAPE,
-                                 0, URL_BUTTON_WIDTH_LANDSCAPE,
+                                 URL_BUTTON_WIDTH_LANDSCAPE + URL_BUTTON_WIDTH_LANDSCAPE,
+                                 0, URL_BUTTON_WIDTH_LANDSCAPE - URL_BUTTON_WIDTH_LANDSCAPE,
                                  URL_BUTTON_HEIGHT_LANDSCAPE)];
 
             int contentOffset = URL_TEXTFIELD_HEIGHT_EXPANDED;
@@ -665,10 +700,12 @@ const float CAMERA_FRAME_JPEG_COMPRESSION_FACTOR = 0.5;
                                                 URL_TEXTFIELD_HEIGHT_EXPANDED)];
         [backButton setFrame:CGRectMake(0, 0, URL_BUTTON_WIDTH_LANDSCAPE,
                                         URL_BUTTON_HEIGHT_LANDSCAPE)];
+        [homeButton setFrame:CGRectMake(URL_BUTTON_WIDTH_LANDSCAPE, 0, URL_BUTTON_WIDTH_LANDSCAPE,
+                                        URL_BUTTON_HEIGHT_LANDSCAPE)];
         [urlTextField setFont:[UIFont systemFontOfSize:17]];
-        [urlTextField setFrame:CGRectMake(URL_BUTTON_WIDTH_LANDSCAPE, 0,
+        [urlTextField setFrame:CGRectMake(URL_BUTTON_WIDTH_LANDSCAPE + URL_BUTTON_WIDTH_LANDSCAPE, 0,
                                           self.view.frame.size.width -
-                                          URL_BUTTON_WIDTH_LANDSCAPE * 2,
+                                          URL_BUTTON_WIDTH_LANDSCAPE * 2 - URL_BUTTON_WIDTH_LANDSCAPE,
                                           URL_TEXTFIELD_HEIGHT_EXPANDED)];
         [refreshButton
          setFrame:CGRectMake(

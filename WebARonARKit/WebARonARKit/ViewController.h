@@ -33,6 +33,7 @@
     UITextField *urlTextField;
     bool urlTextFieldActive;
     UIButton *backButton;
+    UIButton *homeButton;
     UIButton *refreshButton;
 
     bool initialPageLoadedWhenTrackingBegins;
